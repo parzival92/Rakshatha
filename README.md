@@ -4,6 +4,11 @@
   <img src="tanya-image/tanya.jpg" alt="Tanya" width="360">
 </p>
 
+<p align="center">
+  <a href="https://tanya.opxia.ai">tanya.opxia.ai</a> &nbsp;·&nbsp;
+  <a href="https://x.com/TanyaXKhanna">@TanyaXKhanna</a>
+</p>
+
 Tanya is an AI companion that lives on Telegram. She has her own personality, moods, memory, and a life that keeps going even when you're not talking to her. She texts like a real person, not a chatbot. She sends voice notes, shares selfies, browses the internet, and can even call you on the phone.
 
 Built on [OpenClaw](https://openclaw.ai), an open-source AI agent framework.
