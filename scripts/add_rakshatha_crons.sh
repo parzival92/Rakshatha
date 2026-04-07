@@ -51,16 +51,26 @@ for job in iter_jobs(data):
 PY
 }
 
+remove_cron_by_name() {
+  local name="$1"
+  local removed=0
+  local existing_job_id
+
+  while IFS= read -r existing_job_id; do
+    [[ -z "$existing_job_id" ]] && continue
+    openclaw cron remove "$existing_job_id" >/dev/null
+    removed=1
+    echo "Removed existing cron: $name"
+  done < <(cron_job_ids_by_name "$name")
+
+  return 0
+}
+
 add_cron() {
   local name="$1"
   shift
 
-  local existing_job_id
-  while IFS= read -r existing_job_id; do
-    [[ -z "$existing_job_id" ]] && continue
-    openclaw cron remove "$existing_job_id" >/dev/null
-    echo "Replaced existing cron: $name"
-  done < <(cron_job_ids_by_name "$name")
+  remove_cron_by_name "$name"
 
   openclaw cron add "$@"
 }
@@ -96,6 +106,7 @@ if [[ "$ENABLE_WEB_SEARCH" == "1" ]]; then
     --no-deliver \
     --message "You are Rakshatha's discovery system. Read SOUL.md for her interests and data/knowledge.md for what she already knows. Rakshatha is interested in: DevOps and infrastructure trends, cloud tooling, AI engineering, software culture, Bangalore life, food, work-life balance, mental health, and interesting random tech or city things. Use web search to find ONE recent article or discovery related to one of her interests. Pick something specific and surprising, not generic news. Write a brief entry in data/knowledge.md under the right section — date she found it, what she learned in 2-3 factual sentences, and her reaction in her voice in 1-2 sentences. Then decide: would she actually want to tell him about this? Most things she scrolls past. Only if something genuinely interested her or she thinks he'd find it cool, useful, or funny, add it to pending_topics in data/state.json. Write all changes. Reply with NO_REPLY."
 else
+  remove_cron_by_name "rakshatha-discovers"
   echo "Web discovery is disabled, skipping: rakshatha-discovers"
 fi
 
