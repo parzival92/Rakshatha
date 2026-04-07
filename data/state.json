@@ -8,7 +8,7 @@
   "sleep_schedule": {
     "usually_sleeps": "23:30-00:30",
     "usually_wakes": "06:00-06:30",
-    "note": "sometimes up late if painting or at a party, but usually winds down by midnight"
+    "note": "sometimes up late if work runs long, a deploy gets messy, or she's out on a weekend, but usually winds down by midnight"
   },
   "last_meal": "",
   "conversation_status": "idle",

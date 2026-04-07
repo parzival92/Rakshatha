@@ -2,12 +2,12 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TARGET_ROOT="${TANYA_TARGET_ROOT:-/root/.openclaw}"
+TARGET_ROOT="${RAKSHATHA_TARGET_ROOT:-/root/.openclaw}"
 TARGET_WORKSPACE="$TARGET_ROOT/workspace"
 TARGET_AGENT_DIR="$TARGET_ROOT/agents/main/agent"
 TARGET_SCRIPTS="$TARGET_ROOT/scripts"
-TARGET_MEDIA="$TARGET_ROOT/media/tanya-image"
-MAIN_MODEL="${TANYA_MAIN_MODEL:-openai/gpt-5.4}"
+TARGET_MEDIA="$TARGET_ROOT/media/rakshatha-image"
+MAIN_MODEL="${RAKSHATHA_MAIN_MODEL:-openai/gpt-5.4-mini}"
 MODE="${1:-init}"
 VERSION="1.0.0"
 
@@ -120,7 +120,7 @@ usage() {
     ./setup              First-time install
     ./setup init         Same as above
     ./setup configure    Update features on an existing install
-    ./setup uninstall    Remove Tanya and OpenClaw completely
+    ./setup uninstall    Remove Rakshatha and OpenClaw completely
 
 EOF
 }
@@ -273,12 +273,12 @@ print_banner() {
   printf '%s' "$MAGENTA$BOLD"
   cat <<'ART'
 
-      ████████╗ █████╗ ███╗   ██╗██╗   ██╗ █████╗
-      ╚══██╔══╝██╔══██╗████╗  ██║╚██╗ ██╔╝██╔══██╗
-         ██║   ███████║██╔██╗ ██║ ╚████╔╝ ███████║
-         ██║   ██╔══██║██║╚██╗██║  ╚██╔╝  ██╔══██║
-         ██║   ██║  ██║██║ ╚████║   ██║   ██║  ██║
-         ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝
+      ██████╗  █████╗ ██╗  ██╗███████╗██╗  ██╗ █████╗ ████████╗██╗  ██╗ █████╗
+      ██╔══██╗██╔══██╗██║ ██╔╝██╔════╝██║  ██║██╔══██╗╚══██╔══╝██║  ██║██╔══██╗
+      ██████╔╝███████║█████╔╝ ███████╗███████║███████║   ██║   ███████║███████║
+      ██╔══██╗██╔══██║██╔═██╗ ╚════██║██╔══██║██╔══██║   ██║   ██╔══██║██╔══██║
+      ██║  ██║██║  ██║██║  ██╗███████║██║  ██║██║  ██║   ██║   ██║  ██║██║  ██║
+      ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝
 
 ART
   printf '%s' "$RESET"
@@ -293,7 +293,7 @@ ART
     info "Press Enter on any prompt to keep the current value."
   else
     echo
-    info "This wizard will set up Tanya on this machine."
+    info "This wizard will set up Rakshatha on this machine."
     info "It takes about 5 minutes. You'll need a few API keys."
   fi
   echo
@@ -312,7 +312,9 @@ load_existing_defaults() {
   DEFAULT_USER_PHONE=""
   DEFAULT_TELEGRAM_BOT_TOKEN=""
   DEFAULT_OPENAI_API_KEY=""
+  DEFAULT_OPENAI_PROFILE_PRESENT=0
   DEFAULT_GOOGLE_API_KEY=""
+  DEFAULT_GOOGLE_PROFILE_PRESENT=0
   DEFAULT_WEB_SEARCH_API_KEY=""
   DEFAULT_ELEVENLABS_API_KEY=""
   DEFAULT_ELEVENLABS_VOICE_ID=""
@@ -343,7 +345,9 @@ values = {
     "DEFAULT_USER_PHONE": "",
     "DEFAULT_TELEGRAM_BOT_TOKEN": "",
     "DEFAULT_OPENAI_API_KEY": "",
+    "DEFAULT_OPENAI_PROFILE_PRESENT": "0",
     "DEFAULT_GOOGLE_API_KEY": "",
+    "DEFAULT_GOOGLE_PROFILE_PRESENT": "0",
     "DEFAULT_WEB_SEARCH_API_KEY": "",
     "DEFAULT_ELEVENLABS_API_KEY": "",
     "DEFAULT_ELEVENLABS_VOICE_ID": "",
@@ -373,6 +377,37 @@ if agents_path.exists():
         match = re.search(pattern, text)
         if match:
             values[key] = clean(match.group(1))
+
+credential_candidates = [
+    target_root / "credentials" / "telegram-default-allowFrom.json",
+    target_root / "credentials" / "telegram-allowFrom.json",
+    target_root / "credentials" / "telegram-pairing.json",
+]
+
+def walk_numeric_candidates(obj):
+    if isinstance(obj, dict):
+        for value in obj.values():
+            yield from walk_numeric_candidates(value)
+    elif isinstance(obj, list):
+        for value in obj:
+            yield from walk_numeric_candidates(value)
+    else:
+        candidate = str(obj).strip()
+        if re.fullmatch(r"-?\d{5,}", candidate):
+            yield candidate
+
+if not values["DEFAULT_TELEGRAM_CHAT_ID"]:
+    for candidate_path in credential_candidates:
+        if not candidate_path.exists():
+            continue
+        try:
+            credential_data = json.loads(candidate_path.read_text())
+        except Exception:
+            continue
+        numeric_candidates = list(walk_numeric_candidates(credential_data))
+        if numeric_candidates:
+            values["DEFAULT_TELEGRAM_CHAT_ID"] = numeric_candidates[0]
+            break
 
 openclaw_path = target_root / "openclaw.json"
 if openclaw_path.exists():
@@ -407,8 +442,25 @@ if auth_profiles_path.exists():
     except Exception:
         auth_data = {}
     profiles = auth_data.get("profiles") or {}
-    values["DEFAULT_OPENAI_API_KEY"] = ((profiles.get("openai:default") or {}).get("key")) or values["DEFAULT_OPENAI_API_KEY"]
-    values["DEFAULT_GOOGLE_API_KEY"] = (profiles.get("google:default") or {}).get("key", "")
+
+    openai_profile = None
+    google_profile = None
+    for profile in profiles.values():
+        if not isinstance(profile, dict):
+            continue
+        provider = (profile.get("provider") or "").strip()
+        if provider == "openai" and openai_profile is None:
+            openai_profile = profile
+        if provider == "google" and google_profile is None:
+            google_profile = profile
+
+    if openai_profile is not None:
+        values["DEFAULT_OPENAI_PROFILE_PRESENT"] = "1"
+        values["DEFAULT_OPENAI_API_KEY"] = (openai_profile.get("key") or "").strip()
+
+    if google_profile is not None:
+        values["DEFAULT_GOOGLE_PROFILE_PRESENT"] = "1"
+        values["DEFAULT_GOOGLE_API_KEY"] = (google_profile.get("key") or "").strip()
 
 if call_script.exists():
     call_text = call_script.read_text()
@@ -460,13 +512,13 @@ show_current_status() {
     status_line "Telegram chat ID:" "pending" "$YELLOW"
   fi
 
-  if [[ -n "$DEFAULT_OPENAI_API_KEY" ]]; then
+  if [[ -n "$DEFAULT_OPENAI_API_KEY" || "$DEFAULT_OPENAI_PROFILE_PRESENT" == "1" ]]; then
     status_line "OpenAI API key:" "configured" "$GREEN"
   else
     status_line "OpenAI API key:" "not configured" "$RED"
   fi
 
-  if [[ -n "$DEFAULT_GOOGLE_API_KEY" ]]; then
+  if [[ -n "$DEFAULT_GOOGLE_API_KEY" || "$DEFAULT_GOOGLE_PROFILE_PRESENT" == "1" ]]; then
     status_line "Google API key (images):" "configured" "$GREEN"
   else
     status_line "Google API key (images):" "not configured" "$DIM"
@@ -551,14 +603,14 @@ show_core_setup() {
   local total_steps="$1"
   step_header "1" "$total_steps" "Core Settings"
 
-  info "These are the basics Tanya needs to come alive on Telegram."
+  info "These are the basics Rakshatha needs to come alive on Telegram."
   echo
 
   prompt_value USER_NAME \
     "Your name" \
     0 1 "$DEFAULT_USER_NAME" \
     "Abhimanyu" \
-    "Tanya will know you by this name." \
+    "Rakshatha will know you by this name." \
     validator_any
 
   prompt_value USER_PHONE \
@@ -586,17 +638,33 @@ show_core_setup() {
   echo
   divider
   echo
-  info "Tanya's brain runs on OpenAI. You'll need an API key with credits."
-  key_help "OpenAI" \
-    "https://platform.openai.com/api-keys" \
-    "Create an account > API Keys > Create new key. Requires a paid account with credits."
+  info "Rakshatha's brain runs on OpenAI. You'll need an API key with credits."
+  if [[ -n "$DEFAULT_OPENAI_API_KEY" ]]; then
+    key_help "OpenAI" \
+      "https://platform.openai.com/api-keys" \
+      "Create an account > API Keys > Create new key. Requires a paid account with credits."
 
-  prompt_value OPENAI_API_KEY \
-    "OpenAI API key" \
-    1 1 "$DEFAULT_OPENAI_API_KEY" \
-    "sk-proj-..." \
-    "" \
-    validator_any
+    prompt_value OPENAI_API_KEY \
+      "OpenAI API key" \
+      1 1 "$DEFAULT_OPENAI_API_KEY" \
+      "sk-proj-..." \
+      "" \
+      validator_any
+  elif [[ "$DEFAULT_OPENAI_PROFILE_PRESENT" == "1" ]]; then
+    OPENAI_API_KEY=""
+    good "Using the existing OpenAI auth profile already present in the live OpenClaw install."
+  else
+    key_help "OpenAI" \
+      "https://platform.openai.com/api-keys" \
+      "Create an account > API Keys > Create new key. Requires a paid account with credits."
+
+    prompt_value OPENAI_API_KEY \
+      "OpenAI API key" \
+      1 1 "$DEFAULT_OPENAI_API_KEY" \
+      "sk-proj-..." \
+      "" \
+      validator_any
+  fi
 }
 
 # ─────────────────────────────────────────────────────────────
@@ -612,7 +680,7 @@ configure_images() {
     section "Selfies & Photo Sharing"
   fi
 
-  info "Tanya can share selfies, paintings, food photos, and little moments."
+  info "Rakshatha can share selfies, work desk shots, food photos, commute moments, and little pieces of her day."
   info "Uses Google Gemini for image generation."
   echo
   printf '  %s%sRequires:%s  Google API key with billing enabled\n' "$BOLD" "$WHITE" "$RESET"
@@ -653,7 +721,7 @@ configure_voice() {
     section "Voice Notes"
   fi
 
-  info "Send Tanya voice notes and hear her reply in her own voice."
+  info "Send Rakshatha voice notes and hear her reply in her own voice."
   info "Uses ElevenLabs for text-to-speech and OpenAI for transcription."
   echo
   printf '  %s%sRequires:%s  ElevenLabs API key + voice ID  %s(free tier: 10k chars/month)%s\n' "$BOLD" "$WHITE" "$RESET" "$DIM" "$RESET"
@@ -702,7 +770,7 @@ configure_web() {
     section "Web Discovery"
   fi
 
-  info "Tanya can look things up online, stay current, and share discoveries."
+  info "Rakshatha can look things up online, stay current, and share discoveries."
   info "Uses Google search via Gemini."
   echo
   printf '  %s%sRequires:%s  Google API key  %s(free tier available)%s\n' "$BOLD" "$WHITE" "$RESET" "$DIM" "$RESET"
@@ -743,7 +811,7 @@ configure_calls() {
     section "Phone Calls"
   fi
 
-  info "Tanya can call you and you can talk to her over the phone."
+  info "Rakshatha can call you and you can talk to her over the phone."
   info "Uses ElevenLabs Conversational AI + a Twilio phone number."
   echo
   printf '  %s%sRequires:%s  ElevenLabs API key + Agent ID + Twilio number\n' "$BOLD" "$WHITE" "$RESET"
@@ -857,6 +925,41 @@ install_done() {
   printf '\r\033[2K  %s+%s  %s\n' "$GREEN" "$RESET" "$1"
 }
 
+backup_existing_workspace_if_needed() {
+  if [[ "$MODE" != "init" ]]; then
+    return 0
+  fi
+
+  if [[ ! -d "$TARGET_WORKSPACE" ]]; then
+    return 0
+  fi
+
+  if [[ -f "$TARGET_WORKSPACE/data/state.json" ]]; then
+    return 0
+  fi
+
+  if [[ -z "$(find "$TARGET_WORKSPACE" -mindepth 1 -maxdepth 1 2>/dev/null)" ]]; then
+    return 0
+  fi
+
+  local backup_dir
+  backup_dir="$TARGET_ROOT/workspace.pre-rakshatha.$(date +%Y%m%d-%H%M%S)"
+
+  section "Backing Up Existing Workspace"
+  info "Found an existing OpenClaw workspace that does not look like a live Rakshatha install."
+  info "Creating a safety backup before writing Rakshatha files."
+
+  install_step "Backing up existing workspace..."
+  cp -R "$TARGET_WORKSPACE" "$backup_dir"
+  install_done "Workspace backup created at $backup_dir"
+}
+
+sync_cron_installer_script() {
+  mkdir -p "$TARGET_SCRIPTS"
+  cp "$REPO_ROOT/scripts/add_rakshatha_crons.sh" "$TARGET_SCRIPTS/add_rakshatha_crons.sh"
+  chmod +x "$TARGET_SCRIPTS/add_rakshatha_crons.sh"
+}
+
 # ─────────────────────────────────────────────────────────────
 # Gateway and system operations
 # ─────────────────────────────────────────────────────────────
@@ -903,6 +1006,7 @@ write_runtime_files() {
   export USER_NAME TELEGRAM_USERNAME TELEGRAM_CHAT_ID USER_PHONE TELEGRAM_BOT_TOKEN OPENAI_API_KEY
   export GOOGLE_API_KEY WEB_SEARCH_API_KEY ELEVENLABS_API_KEY ELEVENLABS_VOICE_ID ELEVENLABS_AGENT_ID ELEVENLABS_PHONE_NUMBER_ID
   export ENABLE_IMAGES ENABLE_VOICE ENABLE_CALLS ENABLE_WEB GATEWAY_TOKEN MODE SETUP_LAST_RUN_COMMAND
+  export DEFAULT_OPENAI_PROFILE_PRESENT DEFAULT_GOOGLE_PROFILE_PRESENT
 
   python3 - <<'PY'
 import json
@@ -931,12 +1035,14 @@ elevenlabs_key = os.environ.get("ELEVENLABS_API_KEY", "")
 elevenlabs_voice_id = os.environ.get("ELEVENLABS_VOICE_ID", "")
 elevenlabs_agent_id = os.environ.get("ELEVENLABS_AGENT_ID", "")
 elevenlabs_phone_number_id = os.environ.get("ELEVENLABS_PHONE_NUMBER_ID", "")
+default_openai_profile_present = os.environ.get("DEFAULT_OPENAI_PROFILE_PRESENT") == "1"
+default_google_profile_present = os.environ.get("DEFAULT_GOOGLE_PROFILE_PRESENT") == "1"
 
 for path in (workspace, workspace / "data", workspace / "memory", agent_dir, scripts_dir, media_dir):
     path.mkdir(parents=True, exist_ok=True)
 
 always_copy_static = [
-    "CLAUDE.md",
+    "CODEX.md",
     "HEARTBEAT.md",
     "IDENTITY.md",
     "TOOLS.md",
@@ -955,11 +1061,11 @@ if mode == "init":
 elif not (workspace / "MEMORY.md").exists():
     shutil.copy2(repo / "MEMORY.md", workspace / "MEMORY.md")
 
-for image_file in (repo / "tanya-image").glob("*"):
+for image_file in (repo / "rakshatha-image").glob("*"):
     if image_file.is_file():
         shutil.copy2(image_file, media_dir / image_file.name)
 
-shutil.copy2(repo / "scripts" / "add_tanya_crons.sh", scripts_dir / "add_tanya_crons.sh")
+shutil.copy2(repo / "scripts" / "add_rakshatha_crons.sh", scripts_dir / "add_rakshatha_crons.sh")
 shutil.copy2(repo / "scripts" / "call_user.sh", scripts_dir / "call_user.sh")
 
 source_call = (repo / "scripts" / "call_user.sh").read_text()
@@ -969,7 +1075,7 @@ if enable_calls:
     source_call = source_call.replace("<ELEVENLABS_PHONE_NUMBER_ID>", elevenlabs_phone_number_id)
 (scripts_dir / "call_user.sh").write_text(source_call)
 (scripts_dir / "call_user.sh").chmod(0o755)
-(scripts_dir / "add_tanya_crons.sh").chmod(0o755)
+(scripts_dir / "add_rakshatha_crons.sh").chmod(0o755)
 
 agents_text = (repo / "AGENTS.md").read_text()
 agents_text = agents_text.replace("<user-name>", os.environ["USER_NAME"])
@@ -986,7 +1092,7 @@ def feature_line(name: str, enabled: bool, enabled_text: str, disabled_text: str
 feature_block = "\n".join([
     "<!-- setup generated feature note -->",
     "## This Install",
-    "This note is specific to this Tanya install.",
+    "This note is specific to this Rakshatha install.",
     "Never mention tools, missing features, setup, APIs, or technical limitations.",
     feature_line(
         "selfies and photos",
@@ -1060,7 +1166,9 @@ openclaw = {
             "typingMode": "never",
             "heartbeat": {
                 "every": "10m",
-                "target": "last",
+                "target": "telegram",
+                "to": os.environ["TELEGRAM_CHAT_ID"],
+                "directPolicy": "allow",
             },
         }
     },
@@ -1085,7 +1193,7 @@ openclaw = {
         "ownerDisplay": "raw",
     },
     "session": {
-        "dmScope": "per-channel-peer",
+        "dmScope": "main",
         "reset": {
             "mode": "daily",
             "atHour": 7,
@@ -1198,24 +1306,43 @@ if web_search_key:
 
 (target_root / "openclaw.json").write_text(json.dumps(openclaw, indent=2) + "\n")
 
+existing_auth_profiles = {}
+auth_profiles_path = agent_dir / "auth-profiles.json"
+if auth_profiles_path.exists():
+    try:
+        existing_auth_profiles = json.loads(auth_profiles_path.read_text())
+    except Exception:
+        existing_auth_profiles = {}
+
 auth_profiles = {
-    "version": 1,
-    "profiles": {
-        "openai:default": {
-            "type": "api_key",
-            "provider": "openai",
-            "key": openai_key,
-        }
-    },
-    "lastGood": {
-        "openai": "openai:default",
-    },
-    "usageStats": {
-        "openai:default": {
-            "errorCount": 0,
-        }
-    },
+    "version": existing_auth_profiles.get("version", 1),
+    "profiles": {},
+    "lastGood": existing_auth_profiles.get("lastGood", {}),
+    "usageStats": existing_auth_profiles.get("usageStats", {}),
 }
+
+existing_profiles = existing_auth_profiles.get("profiles") or {}
+
+def clone_existing_provider_profiles(provider: str):
+    cloned = {}
+    for profile_id, profile in existing_profiles.items():
+        if not isinstance(profile, dict):
+            continue
+        if (profile.get("provider") or "").strip() != provider:
+            continue
+        cloned[profile_id] = profile
+    return cloned
+
+if openai_key:
+    auth_profiles["profiles"]["openai:default"] = {
+        "type": "api_key",
+        "provider": "openai",
+        "key": openai_key,
+    }
+    auth_profiles["lastGood"]["openai"] = "openai:default"
+    auth_profiles["usageStats"]["openai:default"] = auth_profiles["usageStats"].get("openai:default", {"errorCount": 0})
+elif default_openai_profile_present:
+    auth_profiles["profiles"].update(clone_existing_provider_profiles("openai"))
 
 if google_key:
     auth_profiles["profiles"]["google:default"] = {
@@ -1227,6 +1354,11 @@ if google_key:
     auth_profiles["usageStats"]["google:default"] = {
         "errorCount": 0,
     }
+elif default_google_profile_present:
+    auth_profiles["profiles"].update(clone_existing_provider_profiles("google"))
+
+if not auth_profiles["profiles"]:
+    raise RuntimeError("No auth profiles available to write. Re-run setup with valid provider credentials.")
 
 (agent_dir / "auth-profiles.json").write_text(json.dumps(auth_profiles, indent=2) + "\n")
 PY
@@ -1410,7 +1542,7 @@ show_complete() {
 ART
   printf '%s\n' "$RESET"
 
-  info "Tanya is now live on Telegram. Send her a message!"
+  info "Rakshatha is now live on Telegram. Send her a message!"
   echo
   hint "Update features anytime:  ${BOLD}./setup configure${RESET}"
   hint "Check system health:      ${BOLD}openclaw status${RESET}"
@@ -1431,10 +1563,10 @@ do_uninstall() {
   init_colors
 
   echo
-  printf '%s%s%s\n' "$BOLD$MAGENTA" "  Tanya Uninstall" "$RESET"
+  printf '%s%s%s\n' "$BOLD$MAGENTA" "  Rakshatha Uninstall" "$RESET"
   divider
   echo
-  warn "This will completely remove Tanya and OpenClaw from this machine."
+  warn "This will completely remove Rakshatha and OpenClaw from this machine."
   echo
   echo "  The following will be removed:"
   echo "    ${RED}-${RESET}  OpenClaw gateway (stopped)"
@@ -1478,7 +1610,7 @@ do_uninstall() {
   echo
   divider
   echo
-  good "Tanya and OpenClaw have been completely removed."
+  good "Rakshatha and OpenClaw have been completely removed."
   echo
 }
 
@@ -1522,7 +1654,7 @@ main() {
   fi
 
   if [[ "$MODE" == "init" && -f "$TARGET_WORKSPACE/data/state.json" ]]; then
-    die "A live Tanya workspace already exists at $TARGET_WORKSPACE/data/state.json. Use ./setup configure instead."
+    die "A live Rakshatha workspace already exists at $TARGET_WORKSPACE/data/state.json. Use ./setup configure instead."
   fi
 
   if [[ "$MODE" == "configure" && ! -f "$TARGET_ROOT/openclaw.json" ]]; then
@@ -1661,8 +1793,9 @@ main() {
   # For cron-only, skip file writing, just reinstall crons
   if [[ "$MODE" == "configure" && "$CONFIGURE_CHOICE" == "6" ]]; then
     section "Reinstalling Cron Jobs"
+    sync_cron_installer_script
     install_step "Adding scheduled jobs (wake-up, life, reflection, discovery)..."
-    TANYA_MAIN_MODEL="$MAIN_MODEL" TANYA_ENABLE_WEB_SEARCH="$ENABLE_WEB" "$TARGET_SCRIPTS/add_tanya_crons.sh" >/dev/null 2>&1
+    RAKSHATHA_MAIN_MODEL="$MAIN_MODEL" RAKSHATHA_ENABLE_WEB_SEARCH="$ENABLE_WEB" "$TARGET_SCRIPTS/add_rakshatha_crons.sh" >/dev/null 2>&1
     install_done "Cron jobs installed"
     show_complete
     return 0
@@ -1674,6 +1807,7 @@ main() {
   mkdir -p "$TARGET_ROOT"
   cp "$TARGET_ROOT/openclaw.json" "$TARGET_ROOT/openclaw.json.bak" 2>/dev/null || true
   cp "$TARGET_AGENT_DIR/auth-profiles.json" "$TARGET_AGENT_DIR/auth-profiles.json.bak" 2>/dev/null || true
+  backup_existing_workspace_if_needed
 
   section "Installing"
 
@@ -1693,7 +1827,7 @@ main() {
   if [[ "$RUN_CRONS" == "1" ]]; then
     section "Installing Cron Jobs"
     install_step "Adding scheduled jobs (wake-up, life, reflection, discovery)..."
-    TANYA_MAIN_MODEL="$MAIN_MODEL" TANYA_ENABLE_WEB_SEARCH="$ENABLE_WEB" "$TARGET_SCRIPTS/add_tanya_crons.sh" >/dev/null 2>&1
+    RAKSHATHA_MAIN_MODEL="$MAIN_MODEL" RAKSHATHA_ENABLE_WEB_SEARCH="$ENABLE_WEB" "$TARGET_SCRIPTS/add_rakshatha_crons.sh" >/dev/null 2>&1
     install_done "Cron jobs installed"
   fi
 
@@ -1718,7 +1852,7 @@ show_core_setup_silent() {
   TELEGRAM_BOT_TOKEN="${DEFAULT_TELEGRAM_BOT_TOKEN:-}"
   OPENAI_API_KEY="${DEFAULT_OPENAI_API_KEY:-}"
 
-  if [[ -z "$USER_NAME" || -z "$TELEGRAM_BOT_TOKEN" || -z "$OPENAI_API_KEY" ]]; then
+  if [[ -z "$USER_NAME" || -z "$TELEGRAM_BOT_TOKEN" || ( -z "$OPENAI_API_KEY" && "$DEFAULT_OPENAI_PROFILE_PRESENT" != "1" ) ]]; then
     warn "Core settings are incomplete. Let's fill them in first."
     show_core_setup ""
   fi

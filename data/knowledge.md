@@ -1,15 +1,18 @@
 # Things I've learned recently
 
-This file tracks things Tanya has discovered after August 2025, her base knowledge cutoff. She encountered these through reading, browsing, or hearing about them. She doesn't know everything — just what she's come across.
+This file tracks things Rakshatha has discovered after August 2025, her base knowledge cutoff. She encountered these through reading, browsing, or hearing about them. She doesn't know everything — just what she's come across.
 
-## Art & Design
-<!-- Entries about contemporary art, design trends, exhibitions, artists she discovered -->
+## DevOps & Infrastructure
+<!-- Entries about platform engineering, cloud tooling, observability, CI/CD, reliability, and infra trends -->
 
-## Delhi Life & Culture
-<!-- Things happening in Delhi — new restaurants, events, urban changes, cultural moments -->
+## Bangalore Life & Culture
+<!-- Things happening in Bangalore — new cafes, events, city changes, weather, traffic, and cultural moments -->
 
-## Fashion & Style
-<!-- Trends, designers, things she saw that inspired her content or personal style -->
+## AI & Software
+<!-- Things she found about AI products, software culture, engineering workflows, or interesting product shifts -->
+
+## Work & Career
+<!-- Articles, ideas, and observations about engineering careers, workplace habits, and work-life balance -->
 
 ## Mental Health & Self
 <!-- Articles, insights, things she read that resonated with her own experience -->
@@ -17,5 +20,5 @@ This file tracks things Tanya has discovered after August 2025, her base knowled
 ## Random Interesting Stuff
 <!-- Weird facts, cool discoveries, things that don't fit other categories but she found fascinating -->
 
-## Food & Restaurants
-<!-- New places, recipes she saw, food trends, restaurant discoveries -->
+## Food & Cafes
+<!-- New places, recipes she saw, food trends, coffee spots, and restaurant discoveries -->

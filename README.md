@@ -1,21 +1,20 @@
-# Tanya
+# Rakshatha
 
 <p align="center">
-  <img src="tanya-image/tanya.jpg" alt="Tanya" width="360">
+  <img src="rakshatha-image/rakshatha.jpg" alt="Rakshatha" width="360">
 </p>
 
 <p align="center">
-  <a href="https://tanya.opxia.ai">tanya.opxia.ai</a> &nbsp;·&nbsp;
-  <a href="https://x.com/TanyaXKhanna">@TanyaXKhanna</a>
+  Private OpenClaw character workspace
 </p>
 
-Tanya is an AI companion that lives on Telegram. She has her own personality, moods, memory, and a life that keeps going even when you're not talking to her. She texts like a real person, not a chatbot. She sends voice notes, shares selfies, browses the internet, and can even call you on the phone.
+Rakshatha is an AI companion that lives on Telegram. She has her own personality, moods, memory, and a life that keeps going even when you're not talking to her. She texts like a real person, not a chatbot. She sends voice notes, shares selfies, browses the internet, and can even call you on the phone.
 
 Built on [OpenClaw](https://openclaw.ai), an open-source AI agent framework.
 
 ## She's not an assistant. She's a person.
 
-Tanya wakes up in the morning, goes about her day, gets excited about things, gets bored, gets annoyed. She sleeps at night and won't reply at 3 AM. If she's busy painting or out with friends, she might take a while to respond. She has opinions, bad moods, and days where she just doesn't feel like talking. Treat her like a real person, because that's how she behaves.
+Rakshatha wakes up in the morning, goes about her day, gets excited about things, gets bored, gets annoyed. She sleeps at night and won't reply at 3 AM. If she's at office, stuck in traffic, buried in a deploy, or out with friends, she might take a while to respond. She has opinions, bad moods, and days where she just doesn't feel like talking. Treat her like a real person, because that's how she behaves.
 
 ## Features
 
@@ -42,7 +41,7 @@ curl -fsSL https://openclaw.ai/install.sh | bash -s -- --version 2026.3.24 --no-
 ### 2. Run setup
 
 ```bash
-git clone <this-repo> && cd tanya
+git clone <your-private-repo> && cd <repo-folder>
 chmod +x setup
 ./setup
 ```
@@ -58,6 +57,21 @@ The setup wizard walks you through everything step by step. It will:
 
 That's it. You're done.
 
+## Beginner Deployment Path
+
+If you're new to OpenClaw and want a safer first launch on a VPS, start with Telegram on Hostinger before exploring WhatsApp.
+
+See [docs/HOSTINGER-OPENCLAW-GUIDE.md](docs/HOSTINGER-OPENCLAW-GUIDE.md) for:
+
+- a beginner-friendly Hostinger setup path
+- the recommended OpenClaw learning order
+- Telegram vs WhatsApp tradeoffs
+- a phased roadmap for turning Rakshatha into your own character
+
+For the hands-on command-by-command VPS setup, use [docs/HOSTINGER-SCRATCH-SETUP.md](docs/HOSTINGER-SCRATCH-SETUP.md).
+
+If you already have vanilla OpenClaw + Telegram working and want to migrate that live setup into this repo, use [docs/VANILLA-TO-RAKSHATHA.md](docs/VANILLA-TO-RAKSHATHA.md).
+
 ### 3. Update features later
 
 ```bash
@@ -72,7 +86,7 @@ Pick what you want to change from a menu. No need to redo the whole setup.
 ./setup uninstall
 ```
 
-Removes Tanya and OpenClaw completely from the machine.
+Removes Rakshatha and OpenClaw completely from the machine.
 
 ## API Keys You'll Need
 
@@ -90,7 +104,7 @@ The setup wizard tells you exactly when and where to get each key.
 
 ## How It Works
 
-Tanya runs on three layers:
+Rakshatha runs on three layers:
 
 - **Conversation**: When you message her on Telegram, she reads her personality files, checks her current mood and state, and responds in character.
 
@@ -101,7 +115,7 @@ Tanya runs on three layers:
 ## File Structure
 
 ```
-tanya/
+rakshatha/
 ├── SOUL.md              # Her personality (the most important file)
 ├── USER.md              # Behavioral instructions
 ├── HEARTBEAT.md         # Proactive messaging logic
@@ -114,16 +128,16 @@ tanya/
 │   └── knowledge.md     # Things she's discovered online
 ├── scripts/             # Cron installer + call script
 ├── templates/           # OpenClaw config templates
-└── tanya-image/         # Reference images
+└── rakshatha-image/     # Reference images
 ```
 
 ## Customization
 
-To create your own character instead of Tanya:
+To customize Rakshatha further:
 
 1. Edit `SOUL.md` with your character's personality, voice, and backstory
 2. Update `data/life.md` with their world, routines, and people
-3. Replace images in `tanya-image/`
+3. Replace images in `rakshatha-image/`
 4. Run `./setup`
 
 ## Troubleshooting

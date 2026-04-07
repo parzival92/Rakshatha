@@ -1,4 +1,4 @@
 .openclaw/
-.claude/
-CLAUDE.md
+.codex/
 .env
+.DS_Store

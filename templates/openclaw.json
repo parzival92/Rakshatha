@@ -22,13 +22,13 @@
   "agents": {
     "defaults": {
       "model": {
-        "primary": "openai/gpt-5.4"
+        "primary": "openai/gpt-5.4-mini"
       },
       "imageGenerationModel": {
         "primary": "google/gemini-3.1-flash-image-preview"
       },
       "models": {
-        "openai/gpt-5.4": {}
+        "openai/gpt-5.4-mini": {}
       },
       "workspace": "/root/.openclaw/workspace",
       "contextPruning": {
@@ -46,7 +46,9 @@
       "typingMode": "never",
       "heartbeat": {
         "every": "10m",
-        "target": "last"
+        "target": "telegram",
+        "to": "<TELEGRAM_CHAT_ID>",
+        "directPolicy": "allow"
       }
     }
   },
@@ -96,7 +98,7 @@
     "ownerDisplay": "raw"
   },
   "session": {
-    "dmScope": "per-channel-peer",
+    "dmScope": "main",
     "reset": {
       "mode": "daily",
       "atHour": 7
