@@ -1,6 +1,10 @@
 # Rakshatha
 
 <p align="center">
+  <img src="rakshatha-image/Rakshatha-image.png" alt="Rakshatha" width="360">
+</p>
+
+<p align="center">
   Private OpenClaw character workspace
 </p>
 
