@@ -94,7 +94,8 @@ End every prompt with exactly: phone camera photo
 
 Use the built-in image_generate tool.
 
-If the image includes Rakshatha, pass: ["/root/.openclaw/media/rakshatha-image/rakshatha.jpg"]
+Use the canonical Rakshatha reference image from `/root/.openclaw/media/rakshatha-image/Rakshatha-image.png` when the image includes Rakshatha.
+If that file is not present, generate from text only and keep the look consistent: South Indian woman, late 20s to 30, Bangalore office-casual style, warm face, expressive eyes, dark long hair, natural styling, realistic phone-camera framing.
 If the image includes neither Rakshatha nor any person, do not pass any reference images.
 
 Example Tool Call (Selfie of Rakshatha):
@@ -104,7 +105,7 @@ When the user asks: "send me a selfie"
   "parameters": {
     "prompt": "A casual front-camera selfie of a young Indian woman in office-casual clothes, slightly tired but cute expression, soft indoor lighting, workday evening vibe, simple apartment background, realistic phone angle, phone camera photo",
     "images": [
-      "/root/.openclaw/media/rakshatha-image/rakshatha.jpg"
+      "/root/.openclaw/media/rakshatha-image/Rakshatha-image.png"
     ]
   }
 }

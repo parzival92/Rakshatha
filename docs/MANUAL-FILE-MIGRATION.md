@@ -31,7 +31,7 @@ We will manually copy these repo files into the live OpenClaw workspace:
 
 We will also copy:
 
-- `rakshatha-image/` into `~/.openclaw/media/rakshatha-image`
+- any original reference images from `rakshatha-image/` into `~/.openclaw/media/rakshatha-image`
 - `scripts/add_rakshatha_crons.sh`
 - `scripts/call_user.sh`
 
@@ -112,12 +112,16 @@ cp /root/projects/Rakshatha/data/knowledge.md ~/.openclaw/workspace/data/
 Run these on the VPS:
 
 ```bash
-cp -R /root/projects/Rakshatha/rakshatha-image/. ~/.openclaw/media/rakshatha-image/
+find /root/projects/Rakshatha/rakshatha-image -maxdepth 1 -type f \
+  \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) \
+  -exec cp {} ~/.openclaw/media/rakshatha-image/ \;
 cp /root/projects/Rakshatha/scripts/add_rakshatha_crons.sh ~/.openclaw/scripts/
 cp /root/projects/Rakshatha/scripts/call_user.sh ~/.openclaw/scripts/
 chmod +x ~/.openclaw/scripts/add_rakshatha_crons.sh
 chmod +x ~/.openclaw/scripts/call_user.sh
 ```
+
+If you have not created original Rakshatha reference images yet, that `find ... -exec cp ...` command simply copies nothing, which is fine.
 
 ## Phase 6: Verify The Files Landed Correctly
 

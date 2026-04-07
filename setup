@@ -1061,8 +1061,10 @@ if mode == "init":
 elif not (workspace / "MEMORY.md").exists():
     shutil.copy2(repo / "MEMORY.md", workspace / "MEMORY.md")
 
-for image_file in (repo / "rakshatha-image").glob("*"):
-    if image_file.is_file():
+image_dir = repo / "rakshatha-image"
+image_exts = {".jpg", ".jpeg", ".png", ".webp"}
+for image_file in image_dir.glob("*"):
+    if image_file.is_file() and image_file.suffix.lower() in image_exts:
         shutil.copy2(image_file, media_dir / image_file.name)
 
 shutil.copy2(repo / "scripts" / "add_rakshatha_crons.sh", scripts_dir / "add_rakshatha_crons.sh")

@@ -1,14 +1,12 @@
 # Rakshatha
 
 <p align="center">
-  <img src="rakshatha-image/rakshatha.jpg" alt="Rakshatha" width="360">
-</p>
-
-<p align="center">
   Private OpenClaw character workspace
 </p>
 
 Rakshatha is an AI companion that lives on Telegram. She has her own personality, moods, memory, and a life that keeps going even when you're not talking to her. She texts like a real person, not a chatbot. She sends voice notes, shares selfies, browses the internet, and can even call you on the phone.
+
+This repo now includes a canonical Rakshatha reference image in `rakshatha-image/`. Add more original Rakshatha-specific reference images there if you want stronger identity consistency for image generation.
 
 Built on [OpenClaw](https://openclaw.ai), an open-source AI agent framework.
 
@@ -128,7 +126,7 @@ rakshatha/
 │   └── knowledge.md     # Things she's discovered online
 ├── scripts/             # Cron installer + call script
 ├── templates/           # OpenClaw config templates
-└── rakshatha-image/     # Reference images
+└── rakshatha-image/     # Optional original reference images
 ```
 
 ## Customization
@@ -137,7 +135,7 @@ To customize Rakshatha further:
 
 1. Edit `SOUL.md` with your character's personality, voice, and backstory
 2. Update `data/life.md` with their world, routines, and people
-3. Replace images in `rakshatha-image/`
+3. Add original Rakshatha reference images to `rakshatha-image/` if you want image generation anchored to a specific look
 4. Run `./setup`
 
 ## Troubleshooting

@@ -20,7 +20,7 @@ It rewrites the active OpenClaw workspace and config for this character package:
 - updates `~/.openclaw/openclaw.json`
 - updates `~/.openclaw/agents/main/agent/auth-profiles.json`
 - writes Rakshatha workspace files into `~/.openclaw/workspace`
-- copies media into `~/.openclaw/media/rakshatha-image`
+- copies any original reference images from `rakshatha-image/` into `~/.openclaw/media/rakshatha-image`
 - installs Rakshatha cron jobs
 
 That is intentional.
