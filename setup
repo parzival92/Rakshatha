@@ -1532,12 +1532,45 @@ reload_gateway() {
 
 upgrade_openclaw() {
   local backup_stamp
+  local upgrade_choice
+  local update_target_label
+  local -a update_args
   backup_stamp="$(date +%Y%m%d-%H%M%S)"
 
   section "Upgrading OpenClaw"
-  info "This will back up the active config, run openclaw update, and restart the gateway."
+  info "This will back up the active config, update OpenClaw, and restart the gateway."
+  echo
+  echo "  ${BOLD}1${RESET}  Latest stable      ${DIM}(recommended, tracks the stable channel)${RESET}"
+  echo "  ${BOLD}2${RESET}  Specific version    ${DIM}(one-off version or tag, like 2026.4.9 or beta)${RESET}"
+  echo
 
-  if ! prompt_yes_no "Continue with OpenClaw upgrade?" "Y"; then
+  while true; do
+    printf '  %s%s%s  Pick an upgrade target [1-2]: ' "$CYAN" ">" "$RESET"
+    read -r upgrade_choice
+    case "$upgrade_choice" in
+      1)
+        update_target_label="latest stable"
+        update_args=(--channel stable --no-restart --yes)
+        break
+        ;;
+      2)
+        prompt_value OPENCLAW_UPDATE_TAG \
+          "OpenClaw version or tag" \
+          0 1 "" \
+          "2026.4.9" \
+          "You can also use tags like beta or main for a one-off update target." \
+          validator_any
+        update_target_label="$OPENCLAW_UPDATE_TAG"
+        update_args=(--tag "$OPENCLAW_UPDATE_TAG" --no-restart --yes)
+        break
+        ;;
+      *)
+        warn "Please enter 1 or 2."
+        ;;
+    esac
+  done
+
+  if ! prompt_yes_no "Continue with OpenClaw upgrade to $update_target_label?" "Y"; then
     die "Upgrade cancelled."
   fi
 
@@ -1548,10 +1581,10 @@ upgrade_openclaw() {
   cp "$TARGET_AGENT_DIR/auth-profiles.json" "$TARGET_AGENT_DIR/auth-profiles.json.pre-upgrade-${backup_stamp}.bak" 2>/dev/null || true
   install_done "Backups created"
 
-  install_step "Updating OpenClaw..."
-  if ! openclaw update >/dev/null 2>&1; then
+  install_step "Updating OpenClaw ($update_target_label)..."
+  if ! openclaw update "${update_args[@]}" >/dev/null 2>&1; then
     printf '\n'
-    die "OpenClaw update failed. Run 'openclaw update' manually to inspect the error."
+    die "OpenClaw update failed. Run 'openclaw update --dry-run' or the matching update command manually to inspect the error."
   fi
   install_done "OpenClaw updated"
 
