@@ -578,17 +578,17 @@ show_configure_menu() {
   echo
   echo "  ${BOLD}6${RESET}  Reinstall crons    ${DIM}(re-add scheduled jobs)${RESET}"
   echo "  ${BOLD}7${RESET}  Telegram pairing   ${DIM}(pair or re-pair your Telegram account)${RESET}"
-  echo
   echo "  ${BOLD}8${RESET}  Everything         ${DIM}(walk through all settings + crons + pairing)${RESET}"
+  echo "  ${BOLD}9${RESET}  Upgrade OpenClaw   ${DIM}(update runtime + restart gateway)${RESET}"
   echo
 
   local choice
   while true; do
-    printf '  %s%s%s  Pick an option [1-8]: ' "$CYAN" ">" "$RESET"
+    printf '  %s%s%s  Pick an option [1-9]: ' "$CYAN" ">" "$RESET"
     read -r choice
     case "$choice" in
-      1|2|3|4|5|6|7|8) break ;;
-      *) warn "Please enter a number from 1 to 8." ;;
+      1|2|3|4|5|6|7|8|9) break ;;
+      *) warn "Please enter a number from 1 to 9." ;;
     esac
   done
 
@@ -1530,6 +1530,48 @@ reload_gateway() {
   fi
 }
 
+upgrade_openclaw() {
+  local backup_stamp
+  backup_stamp="$(date +%Y%m%d-%H%M%S)"
+
+  section "Upgrading OpenClaw"
+  info "This will back up the active config, run openclaw update, and restart the gateway."
+
+  if ! prompt_yes_no "Continue with OpenClaw upgrade?" "Y"; then
+    die "Upgrade cancelled."
+  fi
+
+  mkdir -p "$TARGET_ROOT" "$TARGET_AGENT_DIR"
+
+  install_step "Backing up active config..."
+  cp "$TARGET_ROOT/openclaw.json" "$TARGET_ROOT/openclaw.json.pre-upgrade-${backup_stamp}.bak" 2>/dev/null || true
+  cp "$TARGET_AGENT_DIR/auth-profiles.json" "$TARGET_AGENT_DIR/auth-profiles.json.pre-upgrade-${backup_stamp}.bak" 2>/dev/null || true
+  install_done "Backups created"
+
+  install_step "Updating OpenClaw..."
+  if ! openclaw update >/dev/null 2>&1; then
+    printf '\n'
+    die "OpenClaw update failed. Run 'openclaw update' manually to inspect the error."
+  fi
+  install_done "OpenClaw updated"
+
+  reload_gateway
+
+  install_step "Checking gateway health..."
+  if openclaw gateway probe >/dev/null 2>&1; then
+    install_done "Gateway is healthy"
+  else
+    printf '\n'
+    warn "Gateway probe did not pass cleanly. Check with 'openclaw status'."
+  fi
+
+  echo
+  good "OpenClaw upgrade complete."
+  hint "Review health:           ${BOLD}openclaw status${RESET}"
+  hint "Deep channel check:      ${BOLD}openclaw status --deep${RESET}"
+  echo
+}
+
 # ─────────────────────────────────────────────────────────────
 # Final screen
 # ─────────────────────────────────────────────────────────────
@@ -1547,6 +1589,7 @@ ART
   info "Rakshatha is now live on Telegram. Send her a message!"
   echo
   hint "Update features anytime:  ${BOLD}./setup configure${RESET}"
+  hint "Upgrade OpenClaw:         ${BOLD}./setup configure${RESET} -> ${BOLD}9${RESET}"
   hint "Check system health:      ${BOLD}openclaw status${RESET}"
   echo
   divider
@@ -1748,6 +1791,10 @@ main() {
         RUN_CRONS=1
         RUN_PAIRING=1
         ;;
+      9)
+        show_core_setup_silent
+        carry_forward_all_defaults
+        ;;
     esac
   else
     show_core_setup "5"
@@ -1765,6 +1812,9 @@ main() {
     :
   elif [[ "$MODE" == "configure" && "$CONFIGURE_CHOICE" == "7" ]]; then
     # Pairing only -- skip summary, go straight to pairing
+    :
+  elif [[ "$MODE" == "configure" && "$CONFIGURE_CHOICE" == "9" ]]; then
+    # Upgrade only -- handled separately
     :
   else
     show_summary
@@ -1800,6 +1850,11 @@ main() {
     RAKSHATHA_MAIN_MODEL="$MAIN_MODEL" RAKSHATHA_ENABLE_WEB_SEARCH="$ENABLE_WEB" "$TARGET_SCRIPTS/add_rakshatha_crons.sh" >/dev/null 2>&1
     install_done "Cron jobs installed"
     show_complete
+    return 0
+  fi
+
+  if [[ "$MODE" == "configure" && "$CONFIGURE_CHOICE" == "9" ]]; then
+    upgrade_openclaw
     return 0
   fi
 

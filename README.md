@@ -154,7 +154,7 @@ To customize Rakshatha further:
 
 ## Notes
 
-- Pinned to OpenClaw `2026.3.24`. Don't switch versions without testing.
+- Pinned to OpenClaw `2026.3.24` for first-time installs. Upgrade the runtime later with `./setup configure` -> `Upgrade OpenClaw`.
 - `data/` and `memory/` are starter templates. They become live state on the VPS.
 - `SOUL.md` is the heart of the character. Only edit it by hand.
 - The setup script backs up your config before overwriting.
