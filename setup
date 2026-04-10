@@ -324,6 +324,7 @@ load_existing_defaults() {
   DEFAULT_ENABLE_VOICE=0
   DEFAULT_ENABLE_CALLS=0
   DEFAULT_ENABLE_WEB=0
+  DEFAULT_ENABLE_DREAMING=0
 
   eval "$(
     python3 - <<'PY'
@@ -357,6 +358,7 @@ values = {
     "DEFAULT_ENABLE_VOICE": "0",
     "DEFAULT_ENABLE_CALLS": "0",
     "DEFAULT_ENABLE_WEB": "0",
+    "DEFAULT_ENABLE_DREAMING": "0",
 }
 
 def clean(value: str) -> str:
@@ -426,11 +428,14 @@ if openclaw_path.exists():
     plugins = (((data.get("plugins") or {}).get("entries")) or {})
     google_plugin = (plugins.get("google") or {}).get("config") or {}
     google_web = google_plugin.get("webSearch") or {}
+    memory_core = (plugins.get("memory-core") or {}).get("config") or {}
+    dreaming = memory_core.get("dreaming") or {}
 
     values["DEFAULT_TELEGRAM_BOT_TOKEN"] = telegram.get("botToken", "")
     values["DEFAULT_ENABLE_IMAGES"] = "1" if image_model.get("primary") else "0"
     values["DEFAULT_ENABLE_VOICE"] = "1" if media_audio.get("enabled") else "0"
     values["DEFAULT_ENABLE_WEB"] = "1" if web_search.get("enabled") else "0"
+    values["DEFAULT_ENABLE_DREAMING"] = "1" if dreaming.get("enabled") else "0"
     values["DEFAULT_ELEVENLABS_API_KEY"] = eleven.get("apiKey", "")
     values["DEFAULT_ELEVENLABS_VOICE_ID"] = eleven.get("voiceId", "")
     values["DEFAULT_WEB_SEARCH_API_KEY"] = google_web.get("apiKey", "")
@@ -534,7 +539,7 @@ show_current_status() {
   divider
   echo
 
-  local img_status voice_status web_status call_status
+  local img_status voice_status web_status dream_status call_status
   if [[ "$DEFAULT_ENABLE_IMAGES" == "1" ]]; then
     img_status="${GREEN}enabled${RESET}"
   else
@@ -550,6 +555,11 @@ show_current_status() {
   else
     web_status="${DIM}disabled${RESET}"
   fi
+  if [[ "$DEFAULT_ENABLE_DREAMING" == "1" ]]; then
+    dream_status="${GREEN}enabled${RESET}"
+  else
+    dream_status="${DIM}disabled${RESET}"
+  fi
   if [[ "$DEFAULT_ENABLE_CALLS" == "1" ]]; then
     call_status="${GREEN}enabled${RESET}"
   else
@@ -559,6 +569,7 @@ show_current_status() {
   printf '  %-28s %s\n' "Selfies & photos:" "$img_status"
   printf '  %-28s %s\n' "Voice notes:" "$voice_status"
   printf '  %-28s %s\n' "Web discovery:" "$web_status"
+  printf '  %-28s %s\n' "Dreaming memory:" "$dream_status"
   printf '  %-28s %s\n' "Phone calls:" "$call_status"
   echo
 }
@@ -580,15 +591,16 @@ show_configure_menu() {
   echo "  ${BOLD}7${RESET}  Telegram pairing   ${DIM}(pair or re-pair your Telegram account)${RESET}"
   echo "  ${BOLD}8${RESET}  Everything         ${DIM}(walk through all settings + crons + pairing)${RESET}"
   echo "  ${BOLD}9${RESET}  Upgrade OpenClaw   ${DIM}(update runtime + restart gateway)${RESET}"
+  echo "  ${BOLD}10${RESET} Dreaming memory    ${DIM}(experimental long-term memory consolidation)${RESET}"
   echo
 
   local choice
   while true; do
-    printf '  %s%s%s  Pick an option [1-9]: ' "$CYAN" ">" "$RESET"
+    printf '  %s%s%s  Pick an option [1-10]: ' "$CYAN" ">" "$RESET"
     read -r choice
     case "$choice" in
-      1|2|3|4|5|6|7|8|9) break ;;
-      *) warn "Please enter a number from 1 to 9." ;;
+      1|2|3|4|5|6|7|8|9|10) break ;;
+      *) warn "Please enter a number from 1 to 10." ;;
     esac
   done
 
@@ -799,6 +811,33 @@ configure_web() {
 }
 
 # ─────────────────────────────────────────────────────────────
+# Feature: Dreaming memory
+# ─────────────────────────────────────────────────────────────
+
+configure_dreaming() {
+  local total_steps="${1:-}"
+
+  if [[ -n "$total_steps" ]]; then
+    step_header "5" "$total_steps" "Dreaming Memory"
+  else
+    section "Dreaming Memory"
+  fi
+
+  info "Dreaming is OpenClaw's experimental memory-core sweep for consolidating stronger long-term memories."
+  info "It writes a human-readable dream diary to DREAMS.md and promotes durable memories into MEMORY.md."
+  printf '  %s%sRequires:%s  OpenClaw 2026.4.9 or newer  %s(experimental)%s\n' "$BOLD" "$WHITE" "$RESET" "$DIM" "$RESET"
+  echo
+
+  if prompt_yes_no "Enable Dreaming memory?" "$(default_yes_no "$DEFAULT_ENABLE_DREAMING")"; then
+    ENABLE_DREAMING=1
+    good "Dreaming will run on the default overnight sweep at 3:00 AM Asia/Kolkata."
+  else
+    ENABLE_DREAMING=0
+    info "Skipped. Enable later with ${BOLD}./setup configure${RESET}"
+  fi
+}
+
+# ─────────────────────────────────────────────────────────────
 # Feature: Phone calls
 # ─────────────────────────────────────────────────────────────
 
@@ -806,7 +845,7 @@ configure_calls() {
   local total_steps="${1:-}"
 
   if [[ -n "$total_steps" ]]; then
-    step_header "5" "$total_steps" "Phone Calls"
+    step_header "6" "$total_steps" "Phone Calls"
   else
     section "Phone Calls"
   fi
@@ -902,6 +941,11 @@ show_summary() {
     printf '  %s+%s  Web discovery          %senabled%s\n' "$GREEN" "$RESET" "$GREEN" "$RESET"
   else
     printf '  %s-%s  Web discovery          %sdisabled%s\n' "$DIM" "$RESET" "$DIM" "$RESET"
+  fi
+  if [[ "$ENABLE_DREAMING" == "1" ]]; then
+    printf '  %s+%s  Dreaming memory        %senabled%s\n' "$GREEN" "$RESET" "$GREEN" "$RESET"
+  else
+    printf '  %s-%s  Dreaming memory        %sdisabled%s\n' "$DIM" "$RESET" "$DIM" "$RESET"
   fi
   if [[ "$ENABLE_CALLS" == "1" ]]; then
     printf '  %s+%s  Phone calls            %senabled%s\n' "$GREEN" "$RESET" "$GREEN" "$RESET"
@@ -1005,7 +1049,7 @@ write_runtime_files() {
   export REPO_ROOT TARGET_ROOT TARGET_WORKSPACE TARGET_AGENT_DIR TARGET_SCRIPTS TARGET_MEDIA MAIN_MODEL
   export USER_NAME TELEGRAM_USERNAME TELEGRAM_CHAT_ID USER_PHONE TELEGRAM_BOT_TOKEN OPENAI_API_KEY
   export GOOGLE_API_KEY WEB_SEARCH_API_KEY ELEVENLABS_API_KEY ELEVENLABS_VOICE_ID ELEVENLABS_AGENT_ID ELEVENLABS_PHONE_NUMBER_ID
-  export ENABLE_IMAGES ENABLE_VOICE ENABLE_CALLS ENABLE_WEB GATEWAY_TOKEN MODE SETUP_LAST_RUN_COMMAND
+  export ENABLE_IMAGES ENABLE_VOICE ENABLE_CALLS ENABLE_WEB ENABLE_DREAMING GATEWAY_TOKEN MODE SETUP_LAST_RUN_COMMAND
   export DEFAULT_OPENAI_PROFILE_PRESENT DEFAULT_GOOGLE_PROFILE_PRESENT
 
   python3 - <<'PY'
@@ -1027,6 +1071,7 @@ enable_images = os.environ["ENABLE_IMAGES"] == "1"
 enable_voice = os.environ["ENABLE_VOICE"] == "1"
 enable_calls = os.environ["ENABLE_CALLS"] == "1"
 enable_web = os.environ["ENABLE_WEB"] == "1"
+enable_dreaming = os.environ["ENABLE_DREAMING"] == "1"
 
 google_key = os.environ.get("GOOGLE_API_KEY", "")
 web_search_key = os.environ.get("WEB_SEARCH_API_KEY", "")
@@ -1053,6 +1098,8 @@ for name in always_copy_static:
 
 if mode == "init":
     shutil.copy2(repo / "MEMORY.md", workspace / "MEMORY.md")
+    if enable_dreaming:
+        shutil.copy2(repo / "DREAMS.md", workspace / "DREAMS.md")
     for name in ("knowledge.md", "life.md", "relationship.md", "state.json"):
         shutil.copy2(repo / "data" / name, workspace / "data" / name)
     for memory_file in (repo / "memory").glob("*"):
@@ -1060,6 +1107,9 @@ if mode == "init":
             shutil.copy2(memory_file, workspace / "memory" / memory_file.name)
 elif not (workspace / "MEMORY.md").exists():
     shutil.copy2(repo / "MEMORY.md", workspace / "MEMORY.md")
+
+if enable_dreaming and not (workspace / "DREAMS.md").exists():
+    shutil.copy2(repo / "DREAMS.md", workspace / "DREAMS.md")
 
 image_dir = repo / "rakshatha-image"
 image_exts = {".jpg", ".jpeg", ".png", ".webp"}
@@ -1132,11 +1182,11 @@ main_model = os.environ["MAIN_MODEL"]
 
 openclaw = {
     "meta": {
-        "lastTouchedVersion": "2026.3.24",
+        "lastTouchedVersion": "2026.4.9",
         "lastTouchedAt": now,
     },
     "wizard": {
-        "lastRunVersion": "2026.3.24",
+        "lastRunVersion": "2026.4.9",
         "lastRunCommand": os.environ["SETUP_LAST_RUN_COMMAND"],
         "lastRunMode": "local",
     },
@@ -1256,6 +1306,19 @@ openclaw = {
     },
 }
 
+plugins_entries = {
+    "memory-core": {
+        "enabled": True,
+        "config": {
+            "dreaming": {
+                "enabled": enable_dreaming,
+                "timezone": "Asia/Kolkata",
+                "frequency": "0 3 * * *",
+            }
+        },
+    }
+}
+
 if enable_images:
     openclaw["agents"]["defaults"]["imageGenerationModel"] = {
         "primary": "google/gemini-3.1-flash-image-preview",
@@ -1295,18 +1358,18 @@ if google_key:
     }
 
 if web_search_key:
-    openclaw["plugins"] = {
-        "entries": {
-            "google": {
-                "enabled": True,
-                "config": {
-                    "webSearch": {
-                        "apiKey": web_search_key,
-                    }
-                },
+    plugins_entries["google"] = {
+        "enabled": True,
+        "config": {
+            "webSearch": {
+                "apiKey": web_search_key,
             }
         }
     }
+
+openclaw["plugins"] = {
+    "entries": plugins_entries,
+}
 
 (target_root / "openclaw.json").write_text(json.dumps(openclaw, indent=2) + "\n")
 
@@ -1728,7 +1791,7 @@ main() {
     echo
     warn "OpenClaw is not installed. Install it first with:"
     echo
-    echo "    ${CYAN}curl -fsSL https://openclaw.ai/install.sh | bash -s -- --version 2026.3.24 --no-onboard${RESET}"
+    echo "    ${CYAN}curl -fsSL https://openclaw.ai/install.sh | bash -s -- --version 2026.4.9 --no-onboard${RESET}"
     echo
     die "Missing required command: openclaw"
   fi
@@ -1746,6 +1809,7 @@ main() {
   ENABLE_VOICE=0
   ENABLE_CALLS=0
   ENABLE_WEB=0
+  ENABLE_DREAMING=0
   GOOGLE_API_KEY=""
   WEB_SEARCH_API_KEY=""
   ELEVENLABS_API_KEY=""
@@ -1766,11 +1830,12 @@ main() {
     show_current_status
     show_configure_menu
 
-    # For options 1-5, carry forward all defaults first
+    # For options 1-5 and 10, carry forward all defaults first
     carry_forward_all_defaults() {
       ENABLE_IMAGES="$DEFAULT_ENABLE_IMAGES"
       ENABLE_VOICE="$DEFAULT_ENABLE_VOICE"
       ENABLE_WEB="$DEFAULT_ENABLE_WEB"
+      ENABLE_DREAMING="$DEFAULT_ENABLE_DREAMING"
       ENABLE_CALLS="$DEFAULT_ENABLE_CALLS"
       GOOGLE_API_KEY="${GOOGLE_API_KEY:-$DEFAULT_GOOGLE_API_KEY}"
       WEB_SEARCH_API_KEY="${WEB_SEARCH_API_KEY:-$DEFAULT_WEB_SEARCH_API_KEY}"
@@ -1805,6 +1870,11 @@ main() {
         carry_forward_all_defaults
         configure_calls
         ;;
+      10)
+        show_core_setup_silent
+        carry_forward_all_defaults
+        configure_dreaming
+        ;;
       6)
         show_core_setup_silent
         carry_forward_all_defaults
@@ -1818,11 +1888,12 @@ main() {
         RUN_PAIRING=1
         ;;
       8)
-        show_core_setup "5"
-        configure_images "5"
-        configure_voice "5"
-        configure_web "5"
-        configure_calls "5"
+        show_core_setup "6"
+        configure_images "6"
+        configure_voice "6"
+        configure_web "6"
+        configure_dreaming "6"
+        configure_calls "6"
         RUN_CRONS=1
         RUN_PAIRING=1
         ;;
@@ -1832,11 +1903,12 @@ main() {
         ;;
     esac
   else
-    show_core_setup "5"
-    configure_images "5"
-    configure_voice "5"
-    configure_web "5"
-    configure_calls "5"
+    show_core_setup "6"
+    configure_images "6"
+    configure_voice "6"
+    configure_web "6"
+    configure_dreaming "6"
+    configure_calls "6"
     RUN_CRONS=1
     RUN_PAIRING=1
   fi
@@ -1882,7 +1954,7 @@ main() {
     section "Reinstalling Cron Jobs"
     sync_cron_installer_script
     install_step "Adding scheduled jobs (wake-up, life, reflection, discovery)..."
-    RAKSHATHA_MAIN_MODEL="$MAIN_MODEL" RAKSHATHA_ENABLE_WEB_SEARCH="$ENABLE_WEB" "$TARGET_SCRIPTS/add_rakshatha_crons.sh" >/dev/null 2>&1
+    RAKSHATHA_MAIN_MODEL="$MAIN_MODEL" RAKSHATHA_ENABLE_WEB_SEARCH="$ENABLE_WEB" RAKSHATHA_ENABLE_DREAMING="$ENABLE_DREAMING" "$TARGET_SCRIPTS/add_rakshatha_crons.sh" >/dev/null 2>&1
     install_done "Cron jobs installed"
     show_complete
     return 0
@@ -1919,7 +1991,7 @@ main() {
   if [[ "$RUN_CRONS" == "1" ]]; then
     section "Installing Cron Jobs"
     install_step "Adding scheduled jobs (wake-up, life, reflection, discovery)..."
-    RAKSHATHA_MAIN_MODEL="$MAIN_MODEL" RAKSHATHA_ENABLE_WEB_SEARCH="$ENABLE_WEB" "$TARGET_SCRIPTS/add_rakshatha_crons.sh" >/dev/null 2>&1
+    RAKSHATHA_MAIN_MODEL="$MAIN_MODEL" RAKSHATHA_ENABLE_WEB_SEARCH="$ENABLE_WEB" RAKSHATHA_ENABLE_DREAMING="$ENABLE_DREAMING" "$TARGET_SCRIPTS/add_rakshatha_crons.sh" >/dev/null 2>&1
     install_done "Cron jobs installed"
   fi
 
