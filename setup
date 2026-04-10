@@ -1864,6 +1864,7 @@ main() {
         show_core_setup_silent
         carry_forward_all_defaults
         configure_web
+        RUN_CRONS=1
         ;;
       5)
         show_core_setup_silent
@@ -1874,6 +1875,7 @@ main() {
         show_core_setup_silent
         carry_forward_all_defaults
         configure_dreaming
+        RUN_CRONS=1
         ;;
       6)
         show_core_setup_silent
