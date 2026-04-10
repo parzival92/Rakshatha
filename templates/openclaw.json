@@ -45,10 +45,12 @@
       },
       "typingMode": "never",
       "heartbeat": {
-        "every": "10m",
+        "every": "30m",
         "target": "telegram",
         "to": "<TELEGRAM_CHAT_ID>",
-        "directPolicy": "allow"
+        "directPolicy": "allow",
+        "lightContext": true,
+        "isolatedSession": true
       }
     }
   },

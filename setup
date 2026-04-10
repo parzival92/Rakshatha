@@ -1167,10 +1167,12 @@ openclaw = {
             },
             "typingMode": "never",
             "heartbeat": {
-                "every": "10m",
+                "every": "30m",
                 "target": "telegram",
                 "to": os.environ["TELEGRAM_CHAT_ID"],
                 "directPolicy": "allow",
+                "lightContext": True,
+                "isolatedSession": True,
             },
         }
     },
