@@ -1647,7 +1647,8 @@ upgrade_openclaw() {
   install_done "Backups created"
 
   install_step "Updating OpenClaw ($update_target_label)..."
-  if ! openclaw update "${update_args[@]}" >/dev/null 2>&1; then
+  printf '\n'
+  if ! openclaw update "${update_args[@]}"; then
     printf '\n'
     die "OpenClaw update failed. Run 'openclaw update --dry-run' or the matching update command manually to inspect the error."
   fi
