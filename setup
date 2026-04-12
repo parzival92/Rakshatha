@@ -1075,6 +1075,7 @@ enable_dreaming = os.environ["ENABLE_DREAMING"] == "1"
 
 google_key = os.environ.get("GOOGLE_API_KEY", "")
 web_search_key = os.environ.get("WEB_SEARCH_API_KEY", "")
+google_auth_key = google_key or web_search_key
 openai_key = os.environ["OPENAI_API_KEY"]
 elevenlabs_key = os.environ.get("ELEVENLABS_API_KEY", "")
 elevenlabs_voice_id = os.environ.get("ELEVENLABS_VOICE_ID", "")
@@ -1351,7 +1352,7 @@ if enable_voice:
         }
     }
 
-if google_key:
+if google_auth_key:
     openclaw["auth"]["profiles"]["google:default"] = {
         "provider": "google",
         "mode": "api_key",
@@ -1411,11 +1412,11 @@ if openai_key:
 elif default_openai_profile_present:
     auth_profiles["profiles"].update(clone_existing_provider_profiles("openai"))
 
-if google_key:
+if google_auth_key:
     auth_profiles["profiles"]["google:default"] = {
         "type": "api_key",
         "provider": "google",
-        "key": google_key,
+        "key": google_auth_key,
     }
     auth_profiles["lastGood"]["google"] = "google:default"
     auth_profiles["usageStats"]["google:default"] = {
