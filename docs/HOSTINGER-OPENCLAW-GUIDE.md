@@ -75,10 +75,10 @@ apt install -y git curl
 
 ## OpenClaw Baseline
 
-This Dreaming test branch is pinned to OpenClaw `2026.4.9` for safety. Use that exact version for the first deployment so we get a known-good baseline before exploring upgrades.
+This Dreaming test branch is pinned to OpenClaw `2026.4.11` for safety. Use that exact version for the first deployment so we get a known-good baseline before exploring upgrades.
 
 ```bash
-curl -fsSL https://openclaw.ai/install.sh | bash -s -- --version 2026.4.9 --no-onboard
+curl -fsSL https://openclaw.ai/install.sh | bash -s -- --version 2026.4.11 --no-onboard
 openclaw --version
 openclaw doctor
 ```

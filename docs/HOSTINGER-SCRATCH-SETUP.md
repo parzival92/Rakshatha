@@ -125,10 +125,10 @@ What this does:
 
 ### Step 6: Install the pinned OpenClaw version
 
-This Dreaming test branch is currently pinned to OpenClaw `2026.4.9`, so use that first before experimenting with upgrades.
+This Dreaming test branch is currently pinned to OpenClaw `2026.4.11`, so use that first before experimenting with upgrades.
 
 ```bash
-curl -fsSL https://openclaw.ai/install.sh | bash -s -- --version 2026.4.9 --no-onboard
+curl -fsSL https://openclaw.ai/install.sh | bash -s -- --version 2026.4.11 --no-onboard
 ```
 
 What this does:

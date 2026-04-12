@@ -35,10 +35,10 @@ Rakshatha wakes up in the morning, goes about her day, gets excited about things
 
 ### 1. Install OpenClaw
 
-Requires a Linux VPS or server. Pinned to version `2026.4.9`:
+Requires a Linux VPS or server. Pinned to version `2026.4.11`:
 
 ```bash
-curl -fsSL https://openclaw.ai/install.sh | bash -s -- --version 2026.4.9 --no-onboard
+curl -fsSL https://openclaw.ai/install.sh | bash -s -- --version 2026.4.11 --no-onboard
 ```
 
 ### 2. Run setup
@@ -158,7 +158,7 @@ To customize Rakshatha further:
 
 ## Notes
 
-- Pinned to OpenClaw `2026.4.9` for first-time installs on this branch so Dreaming can be tested without an extra runtime upgrade.
+- Pinned to OpenClaw `2026.4.11` for first-time installs on this branch so the latest Dreaming improvements are available without an extra runtime upgrade.
 - Dreaming is experimental and opt-in. Enable it from `./setup` or `./setup configure` when you want memory-core to handle durable memory promotion.
 - `data/` and `memory/` are starter templates. They become live state on the VPS.
 - `SOUL.md` is the heart of the character. Only edit it by hand.

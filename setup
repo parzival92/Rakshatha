@@ -1182,11 +1182,11 @@ main_model = os.environ["MAIN_MODEL"]
 
 openclaw = {
     "meta": {
-        "lastTouchedVersion": "2026.4.9",
+        "lastTouchedVersion": "2026.4.11",
         "lastTouchedAt": now,
     },
     "wizard": {
-        "lastRunVersion": "2026.4.9",
+        "lastRunVersion": "2026.4.11",
         "lastRunCommand": os.environ["SETUP_LAST_RUN_COMMAND"],
         "lastRunMode": "local",
     },
@@ -1606,7 +1606,7 @@ upgrade_openclaw() {
   info "This will back up the active config, update OpenClaw, and restart the gateway."
   echo
   echo "  ${BOLD}1${RESET}  Latest stable      ${DIM}(recommended, tracks the stable channel)${RESET}"
-  echo "  ${BOLD}2${RESET}  Specific version    ${DIM}(one-off version or tag, like 2026.4.9 or beta)${RESET}"
+  echo "  ${BOLD}2${RESET}  Specific version    ${DIM}(one-off version or tag, like 2026.4.11 or beta)${RESET}"
   echo
 
   while true; do
@@ -1622,7 +1622,7 @@ upgrade_openclaw() {
         prompt_value OPENCLAW_UPDATE_TAG \
           "OpenClaw version or tag" \
           0 1 "" \
-          "2026.4.9" \
+          "2026.4.11" \
           "You can also use tags like beta or main for a one-off update target." \
           validator_any
         update_target_label="$OPENCLAW_UPDATE_TAG"
@@ -1791,7 +1791,7 @@ main() {
     echo
     warn "OpenClaw is not installed. Install it first with:"
     echo
-    echo "    ${CYAN}curl -fsSL https://openclaw.ai/install.sh | bash -s -- --version 2026.4.9 --no-onboard${RESET}"
+    echo "    ${CYAN}curl -fsSL https://openclaw.ai/install.sh | bash -s -- --version 2026.4.11 --no-onboard${RESET}"
     echo
     die "Missing required command: openclaw"
   fi
