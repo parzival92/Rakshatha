@@ -1958,7 +1958,7 @@ main() {
     section "Reinstalling Cron Jobs"
     sync_cron_installer_script
     install_step "Adding scheduled jobs (wake-up, life, reflection, discovery)..."
-    RAKSHATHA_MAIN_MODEL="$MAIN_MODEL" RAKSHATHA_ENABLE_WEB_SEARCH="$ENABLE_WEB" RAKSHATHA_ENABLE_DREAMING="$ENABLE_DREAMING" "$TARGET_SCRIPTS/add_rakshatha_crons.sh" >/dev/null 2>&1
+    RAKSHATHA_MAIN_MODEL="$MAIN_MODEL" RAKSHATHA_BACKGROUND_MODEL="openai/gpt-5.4-nano" RAKSHATHA_REFLECTION_MODEL="$MAIN_MODEL" RAKSHATHA_ENABLE_WEB_SEARCH="$ENABLE_WEB" RAKSHATHA_ENABLE_DREAMING="$ENABLE_DREAMING" "$TARGET_SCRIPTS/add_rakshatha_crons.sh" >/dev/null 2>&1
     install_done "Cron jobs installed"
     show_complete
     return 0
@@ -1995,7 +1995,7 @@ main() {
   if [[ "$RUN_CRONS" == "1" ]]; then
     section "Installing Cron Jobs"
     install_step "Adding scheduled jobs (wake-up, life, reflection, discovery)..."
-    RAKSHATHA_MAIN_MODEL="$MAIN_MODEL" RAKSHATHA_ENABLE_WEB_SEARCH="$ENABLE_WEB" RAKSHATHA_ENABLE_DREAMING="$ENABLE_DREAMING" "$TARGET_SCRIPTS/add_rakshatha_crons.sh" >/dev/null 2>&1
+    RAKSHATHA_MAIN_MODEL="$MAIN_MODEL" RAKSHATHA_BACKGROUND_MODEL="openai/gpt-5.4-nano" RAKSHATHA_REFLECTION_MODEL="$MAIN_MODEL" RAKSHATHA_ENABLE_WEB_SEARCH="$ENABLE_WEB" RAKSHATHA_ENABLE_DREAMING="$ENABLE_DREAMING" "$TARGET_SCRIPTS/add_rakshatha_crons.sh" >/dev/null 2>&1
     install_done "Cron jobs installed"
   fi
 
