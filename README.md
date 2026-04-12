@@ -111,7 +111,7 @@ Rakshatha runs on three layers:
 
 - **Conversation**: When you message her on Telegram, she reads her personality files, checks her current mood and state, and responds in character.
 
-- **Heartbeat**: Every 30 minutes, she checks if there's something she wants to say. Maybe she has a topic on her mind, or she wants to share a photo. Most heartbeats are silent.
+- **Heartbeat**: Every 60 minutes, she checks if there's something she wants to say. Maybe she has a topic on her mind, or she wants to share a photo. Most heartbeats are silent.
 
 - **Background jobs**: Wake-up, day flow, optional discovery, and nightly reflection keep her daily state moving even when you're not chatting.
 

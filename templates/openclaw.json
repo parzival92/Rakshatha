@@ -41,7 +41,7 @@
       },
       "typingMode": "never",
       "heartbeat": {
-        "every": "30m",
+        "every": "60m",
         "target": "telegram",
         "to": "<TELEGRAM_CHAT_ID>",
         "directPolicy": "allow",

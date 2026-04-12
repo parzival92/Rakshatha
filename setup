@@ -1218,7 +1218,7 @@ openclaw = {
             },
             "typingMode": "never",
             "heartbeat": {
-                "every": "30m",
+                "every": "60m",
                 "target": "telegram",
                 "to": os.environ["TELEGRAM_CHAT_ID"],
                 "directPolicy": "allow",
