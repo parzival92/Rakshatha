@@ -26,6 +26,7 @@ Rakshatha wakes up in the morning, goes about her day, gets excited about things
 | **Selfies & photos** | Shares images naturally throughout the day | Google AI (billing enabled) |
 | **Voice notes** | Send and receive voice messages | ElevenLabs (free tier available) |
 | **Web discovery** | Stays current, looks things up, shares finds | Google AI (free tier available) |
+| **Dreaming (experimental)** | Consolidates stronger long-term memories overnight | OpenClaw 2026.4.9+ |
 | **Phone calls** | Real voice calls over the phone | ElevenLabs + Twilio (free trials) |
 | **Proactive messaging** | Texts you first when something is on her mind | Included |
 | **Daily life simulation** | Mood, energy, and activities change throughout the day | Included |
@@ -34,10 +35,10 @@ Rakshatha wakes up in the morning, goes about her day, gets excited about things
 
 ### 1. Install OpenClaw
 
-Requires a Linux VPS or server. Pinned to version `2026.3.24`:
+Requires a Linux VPS or server. Pinned to version `2026.4.11`:
 
 ```bash
-curl -fsSL https://openclaw.ai/install.sh | bash -s -- --version 2026.3.24 --no-onboard
+curl -fsSL https://openclaw.ai/install.sh | bash -s -- --version 2026.4.11 --no-onboard
 ```
 
 ### 2. Run setup
@@ -51,7 +52,7 @@ chmod +x setup
 The setup wizard walks you through everything step by step. It will:
 
 - Ask for your name and Telegram bot token
-- Let you pick which features to enable (selfies, voice, web, calls)
+- Let you pick which features to enable (selfies, voice, web, dreaming, calls)
 - Only ask for keys needed for the features you turn on
 - Show you exactly where to get each API key
 - Install all config, workspace files, cron jobs, and media
@@ -110,9 +111,11 @@ Rakshatha runs on three layers:
 
 - **Conversation**: When you message her on Telegram, she reads her personality files, checks her current mood and state, and responds in character.
 
-- **Heartbeat**: Every 10 minutes, she checks if there's something she wants to say. Maybe she has a topic on her mind, or she wants to share a photo. Most heartbeats are silent.
+- **Heartbeat**: Every 30 minutes, she checks if there's something she wants to say. Maybe she has a topic on her mind, or she wants to share a photo. Most heartbeats are silent.
 
-- **Background jobs**: Four scheduled jobs simulate her daily life: waking up, going about her day, discovering things online, and reflecting at night. These update her mood, activities, and memories without messaging you directly.
+- **Background jobs**: Wake-up, day flow, optional discovery, and nightly reflection keep her daily state moving even when you're not chatting.
+
+- **Dreaming (optional)**: If enabled, OpenClaw memory-core runs an overnight sweep that writes a human-readable dream diary to `DREAMS.md` and promotes durable memories into `MEMORY.md`.
 
 ## File Structure
 
@@ -123,6 +126,7 @@ rakshatha/
 ├── HEARTBEAT.md         # Proactive messaging logic
 ├── AGENTS.md            # Session config + user details
 ├── MEMORY.md            # Long-term emotional memories
+├── DREAMS.md            # Optional Dreaming diary from memory-core
 ├── data/                # Live state files
 │   ├── state.json       # Current mood, energy, activity
 │   ├── relationship.md  # What she knows about you
@@ -154,7 +158,8 @@ To customize Rakshatha further:
 
 ## Notes
 
-- Pinned to OpenClaw `2026.3.24` for first-time installs. Upgrade the runtime later with `./setup configure` -> `Upgrade OpenClaw`, where you can choose latest stable or a specific version/tag.
+- Pinned to OpenClaw `2026.4.11` for first-time installs on this branch so the latest Dreaming improvements are available without an extra runtime upgrade.
+- Dreaming is experimental and opt-in. Enable it from `./setup` or `./setup configure` when you want memory-core to handle durable memory promotion.
 - `data/` and `memory/` are starter templates. They become live state on the VPS.
 - `SOUL.md` is the heart of the character. Only edit it by hand.
 - The setup script backs up your config before overwriting.
