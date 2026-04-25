@@ -1009,11 +1009,22 @@ sync_cron_installer_script() {
 # ─────────────────────────────────────────────────────────────
 
 ensure_gateway_running() {
+  local doctor_output
+  local start_output
+  local status_output
+  local gateway_status_output
+  local command_status
+
   section "OpenClaw Health Check"
 
   install_step "Running openclaw doctor..."
-  if ! openclaw doctor --repair >/dev/null 2>&1; then
+  set +e
+  doctor_output="$(openclaw doctor --repair 2>&1)"
+  command_status=$?
+  set -e
+  if [[ "$command_status" -ne 0 ]]; then
     install_done "Doctor found issues (non-fatal)"
+    printf '%s\n' "$doctor_output"
   else
     install_done "Doctor check passed"
   fi
@@ -1024,13 +1035,18 @@ ensure_gateway_running() {
   fi
 
   install_step "Starting gateway..."
-  if ! openclaw gateway start >/dev/null 2>&1; then
+  set +e
+  start_output="$(openclaw gateway start 2>&1)"
+  command_status=$?
+  set -e
+  if [[ "$command_status" -ne 0 ]]; then
     printf '\n'
     warn "Gateway start did not complete cleanly."
+    printf '%s\n' "$start_output"
   fi
 
   local attempt
-  for attempt in 1 2 3 4 5 6 7 8 9 10; do
+  for attempt in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
     if openclaw gateway probe >/dev/null 2>&1; then
       install_done "Gateway is ready"
       return 0
@@ -1038,7 +1054,26 @@ ensure_gateway_running() {
     sleep 2
   done
 
-  die "Gateway is still unreachable. Try: openclaw doctor --repair && openclaw gateway start"
+  printf '\n'
+  warn "Gateway did not become reachable after 30 seconds."
+
+  set +e
+  gateway_status_output="$(openclaw gateway status 2>&1)"
+  command_status=$?
+  set -e
+  if [[ -n "$gateway_status_output" ]]; then
+    printf '\n%s\n' "$gateway_status_output"
+  fi
+
+  set +e
+  status_output="$(openclaw status 2>&1)"
+  command_status=$?
+  set -e
+  if [[ -n "$status_output" ]]; then
+    printf '\n%s\n' "$status_output"
+  fi
+
+  die "Gateway is still unreachable. Review the status output above, then try: openclaw doctor --repair && openclaw gateway start"
 }
 
 # ─────────────────────────────────────────────────────────────
@@ -1581,12 +1616,29 @@ handle_pairing() {
 # ─────────────────────────────────────────────────────────────
 
 reload_gateway() {
+  local restart_output
+  local start_output
+  local command_status
+
   section "Restarting OpenClaw"
   install_step "Restarting gateway..."
-  if ! openclaw gateway restart >/dev/null 2>&1; then
+  set +e
+  restart_output="$(openclaw gateway restart 2>&1)"
+  command_status=$?
+  set -e
+  if [[ "$command_status" -ne 0 ]]; then
     printf '\n'
     warn "Restart did not complete cleanly. Trying fresh start."
-    openclaw gateway start >/dev/null 2>&1 || true
+    printf '%s\n' "$restart_output"
+
+    set +e
+    start_output="$(openclaw gateway start 2>&1)"
+    command_status=$?
+    set -e
+    if [[ "$command_status" -ne 0 ]]; then
+      warn "Fresh gateway start did not complete cleanly."
+      printf '%s\n' "$start_output"
+    fi
   fi
 
   if openclaw gateway probe >/dev/null 2>&1; then
