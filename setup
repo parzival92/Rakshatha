@@ -621,14 +621,14 @@ show_core_setup() {
   prompt_value USER_NAME \
     "Your name" \
     0 1 "$DEFAULT_USER_NAME" \
-    "Abhimanyu" \
+    "Abhishek" \
     "Rakshatha will know you by this name." \
     validator_any
 
   prompt_value USER_PHONE \
     "Your phone number with country code (optional, press Enter to skip)" \
     0 0 "$DEFAULT_USER_PHONE" \
-    "+919512345678" \
+    "+91**********" \
     "Needed only if you want phone calls later." \
     validator_phone
 
@@ -1183,11 +1183,11 @@ main_model = os.environ["MAIN_MODEL"]
 
 openclaw = {
     "meta": {
-        "lastTouchedVersion": "2026.4.11",
+        "lastTouchedVersion": "2026.4.24",
         "lastTouchedAt": now,
     },
     "wizard": {
-        "lastRunVersion": "2026.4.11",
+        "lastRunVersion": "2026.4.24",
         "lastRunCommand": os.environ["SETUP_LAST_RUN_COMMAND"],
         "lastRunMode": "local",
     },
@@ -1218,7 +1218,7 @@ openclaw = {
             },
             "typingMode": "never",
             "heartbeat": {
-                "every": "30m",
+                "every": "60m",
                 "target": "telegram",
                 "to": os.environ["TELEGRAM_CHAT_ID"],
                 "directPolicy": "allow",
@@ -1600,6 +1600,8 @@ upgrade_openclaw() {
   local backup_stamp
   local upgrade_choice
   local update_target_label
+  local update_output
+  local update_status
   local -a update_args
   backup_stamp="$(date +%Y%m%d-%H%M%S)"
 
@@ -1607,7 +1609,7 @@ upgrade_openclaw() {
   info "This will back up the active config, update OpenClaw, and restart the gateway."
   echo
   echo "  ${BOLD}1${RESET}  Latest stable      ${DIM}(recommended, tracks the stable channel)${RESET}"
-  echo "  ${BOLD}2${RESET}  Specific version    ${DIM}(one-off version or tag, like 2026.4.11 or beta)${RESET}"
+  echo "  ${BOLD}2${RESET}  Specific version    ${DIM}(one-off version or tag, like 2026.4.24 or beta)${RESET}"
   echo
 
   while true; do
@@ -1623,7 +1625,7 @@ upgrade_openclaw() {
         prompt_value OPENCLAW_UPDATE_TAG \
           "OpenClaw version or tag" \
           0 1 "" \
-          "2026.4.11" \
+          "2026.4.24" \
           "You can also use tags like beta or main for a one-off update target." \
           validator_any
         update_target_label="$OPENCLAW_UPDATE_TAG"
@@ -1649,11 +1651,26 @@ upgrade_openclaw() {
 
   install_step "Updating OpenClaw ($update_target_label)..."
   printf '\n'
-  if ! openclaw update "${update_args[@]}"; then
-    printf '\n'
-    die "OpenClaw update failed. Run 'openclaw update --dry-run' or the matching update command manually to inspect the error."
+  set +e
+  update_output="$(openclaw update "${update_args[@]}" 2>&1)"
+  update_status=$?
+  set -e
+  printf '%s\n' "$update_output"
+  if [[ "$update_status" -ne 0 ]]; then
+    if grep -q "Update Result: OK" <<<"$update_output"; then
+      warn "OpenClaw updated, but the updater reported a post-update validation warning from the old host process."
+      hint "Continuing so the gateway can restart on the updated OpenClaw binary."
+    else
+      printf '\n'
+      die "OpenClaw update failed. Run 'openclaw update --dry-run' or the matching update command manually to inspect the error."
+    fi
   fi
-  install_done "OpenClaw updated"
+  if [[ "$update_status" -eq 0 ]]; then
+    install_done "OpenClaw updated"
+  else
+    printf '\n'
+    install_done "OpenClaw updated with validation warning"
+  fi
 
   reload_gateway
 
@@ -1793,7 +1810,7 @@ main() {
     echo
     warn "OpenClaw is not installed. Install it first with:"
     echo
-    echo "    ${CYAN}curl -fsSL https://openclaw.ai/install.sh | bash -s -- --version 2026.4.11 --no-onboard${RESET}"
+    echo "    ${CYAN}curl -fsSL https://openclaw.ai/install.sh | bash -s -- --version 2026.4.24 --no-onboard${RESET}"
     echo
     die "Missing required command: openclaw"
   fi
