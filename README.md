@@ -35,10 +35,10 @@ Rakshatha wakes up in the morning, goes about her day, gets excited about things
 
 ### 1. Install OpenClaw
 
-Requires a Linux VPS or server. Pinned to version `2026.4.11`:
+Requires a Linux VPS or server. Pinned to version `2026.4.24`:
 
 ```bash
-curl -fsSL https://openclaw.ai/install.sh | bash -s -- --version 2026.4.11 --no-onboard
+curl -fsSL https://openclaw.ai/install.sh | bash -s -- --version 2026.4.24 --no-onboard
 ```
 
 ### 2. Run setup
@@ -111,7 +111,7 @@ Rakshatha runs on three layers:
 
 - **Conversation**: When you message her on Telegram, she reads her personality files, checks her current mood and state, and responds in character.
 
-- **Heartbeat**: Every 30 minutes, she checks if there's something she wants to say. Maybe she has a topic on her mind, or she wants to share a photo. Most heartbeats are silent.
+- **Heartbeat**: Every 60 minutes, she checks if there's something she wants to say. Maybe she has a topic on her mind, or she wants to share a photo. Most heartbeats are silent.
 
 - **Background jobs**: Wake-up, day flow, optional discovery, and nightly reflection keep her daily state moving even when you're not chatting.
 
@@ -158,7 +158,7 @@ To customize Rakshatha further:
 
 ## Notes
 
-- Pinned to OpenClaw `2026.4.11` for first-time installs on this branch so the latest Dreaming improvements are available without an extra runtime upgrade.
+- Pinned to OpenClaw `2026.4.24` for first-time installs on this branch so the latest Dreaming improvements are available without an extra runtime upgrade.
 - Dreaming is experimental and opt-in. Enable it from `./setup` or `./setup configure` when you want memory-core to handle durable memory promotion.
 - `data/` and `memory/` are starter templates. They become live state on the VPS.
 - `SOUL.md` is the heart of the character. Only edit it by hand.
